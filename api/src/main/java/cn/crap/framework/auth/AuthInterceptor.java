@@ -7,10 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
-import cn.crap.beans.Config;
-import cn.crap.beans.GetBeanByConfig;
 import cn.crap.framework.MyException;
 import cn.crap.inter.dao.ICacheDao;
+import cn.crap.springbeans.Config;
+import cn.crap.springbeans.GetBeanByConfig;
 import cn.crap.utils.Aes;
 import cn.crap.utils.Const;
 import cn.crap.utils.MyCookie;
@@ -42,8 +42,13 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
             	MyCookie.addCookie(Const.COOKIE_UUID, System.currentTimeMillis() + Tools.getChar(10), response);
             }
             
-            // 返回服务器ip
-            response.setHeader("serviceIp", InetAddress.getLocalHost().getHostAddress());
+            try{
+            	// 返回服务器ip
+            	response.setHeader("serviceIp", InetAddress.getLocalHost().getHostAddress());
+            }catch(Exception e){
+            	e.printStackTrace();
+            	response.setHeader("serviceIp", "服务器配置异常，无法获取服务器IP");
+            }
             
             if(authPassport == null || authPassport.validate() == false)
                 return true;
@@ -77,7 +82,7 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
             cacheDao.setObj(Const.CACHE_USER + uid, obj, config.getLoginInforTime());
             
             if(!authPassport.authority().equals("")){
-            	return Tools.hasAuth(authPassport.authority(), MyString.getValueFromRequest(request, "moduleId"), request);
+            	return Tools.hasAuth(authPassport.authority());
             }else{
             	return true;
             }

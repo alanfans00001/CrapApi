@@ -112,6 +112,10 @@ function callAjax(iUrl, iFormId, iPost, isHowMethod, iLoading, iTarget,
 					if(data.indexOf('"success":0') >= 0){
 						data = "[ERROR]"+ eval("(" + data + ")").error.message;
 					}
+					if(data.indexOf('"success":1') >= 0){
+						data = "[OK]操作成功！";
+					}
+
 					//当返回失败页面时需将data替换成提示语句
 					if (isHowMethod == '1' || isHowMethod == 'updateInput') 
 					{
@@ -184,7 +188,7 @@ function callAjax(iUrl, iFormId, iPost, isHowMethod, iLoading, iTarget,
  * @param iTarget
  * @param iLoading //fase:不提示，propup:弹窗提示
  */
-var isFloat = false;
+var floatTimes = 0;
 function showTip(iTarget,iLoading) {
 	var oldLoadText = iLoading;
 	var floatOrPropUp = false;
@@ -199,11 +203,12 @@ function showTip(iTarget,iLoading) {
 		floatOrPropUp = true;
 	}
 	if(oldLoadText.toUpperCase().indexOf('FLOAT') >= 0){
-		if(!isFloat){
-			showMessage('float','false',false,-1);
-			isFloat = true;
-			floatOrPropUp = true;
+		showMessage('float','false',false,-1);
+		floatOrPropUp = true;
+		if( floatTimes < 0 ){
+			floatTimes = 0;
 		}
+		floatTimes = floatTimes + 1;
 	}
 	if (oldLoadText.toUpperCase().indexOf('PROPUP') >= 0 && !floatOrPropUp && document.getElementById(iTarget)&&document.getElementById(iTarget).tagName != "INPUT") {
 		if (iLoading.toUpperCase() != "FALSE"){
@@ -224,30 +229,42 @@ function closeTip(data,iLoading,tipTime){
 	if(tipTime==-1){//不关闭
 		tipMessage = '';
 	}
+	if(data.indexOf('[OK]')>=0){
+		if( data.replace('[OK]','')!='' )
+			tipMessage = data.replace('[OK]','') + tipMessage;
+		else
+			tipMessage = "操作成功！<br>" + tipMessage;
+	}
+	if(data.indexOf('[ERROR]')>=0){
+		tipMessage = data.replace('[ERROR]', '') + "<br>" + tipMessage;
+	}
+	
 	if(iLoading.toUpperCase().indexOf('PROPUP') >= 0){
 		//返回结果有提示
-		if (data.indexOf('[ERROR]') < 0 && data.indexOf('[OK]')>=0 && data.replace('[OK]','')!=''){
-			$("#lookUpContent").html(succ1 + data.replace('[OK]','') + "<br>" + tipMessage +succ2);
+		if (data.indexOf('[OK]')>=0){
+			$("#lookUpContent").html(succ1 + tipMessage +succ2);
 		}
 		//返回结果没有提示
 		else if(data.indexOf('[ERROR]') < 0){
-			$("#lookUpContent").html(succ1+"操作成功！<br>"+tipMessage+succ2);
+			$("#lookUpContent").html(succ1+tipMessage+succ2);
 		}
 		else{
 			if(tipTime !=-1){
 				tipTime = 5;
 				tipMessage = tipTime+ "秒后自动关闭";
 			}
-			$("#lookUpContent").html(err1+data.replace('[ERROR]', '') + "<br>" +  tipMessage +err2);
+			$("#lookUpContent").html(err1+tipMessage +err2);
 		}
 		showMessage('lookUp','false',false,tipTime);
 	}
 	if(iLoading.toUpperCase().indexOf('FLOAT') >= 0){
-		if(isFloat){
+		floatTimes = floatTimes - 1;
+		if( floatTimes == 0){
 			showMessage("float",'false',false,0);
-			isFloat = false;
-			floatOrPropUp = true;
 		}
+	}
+	if(iLoading.toUpperCase().indexOf('TIP') >= 0){
+		showMessage("tip-div",tipMessage,false,tipTime);
 	}
 }
 /** *********************页面提示信息显示方法************************* */
@@ -360,7 +377,7 @@ function iShow(id){
 }
 
 /**
- * 全选、全部选
+ * 全选、全不选
  * 
  * @param id
  *            点击多选框

@@ -2,7 +2,7 @@ body{
 	font-size:12px;
 	word-break:break-all; 
 	word-wrap:break-word;
-	background-color:#DDD;
+	background-color:#DDDDDD;
 }
 /**火狐红色边框**/
 input:required:invalid, input:focus:invalid, textarea:required:invalid, textarea:focus:invalid{box-shadow: none;}
@@ -20,16 +20,13 @@ blockquote{
 }
 /***remote iconfont*****/
 @font-face {
-  font-family: 'iconfont';
-  src: url('//at.alicdn.com/t/font_1475400982_4863694.eot'); /* IE9*/
-  src: url('//at.alicdn.com/t/font_1475400982_4863694.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-  url('//at.alicdn.com/t/font_1475400982_4863694.woff') format('woff'), /* chrome、firefox */
-  url('//at.alicdn.com/t/font_1475400982_4863694.ttf') format('truetype'), /* chrome、firefox、opera、Safari, Android, iOS 4.2+*/
-  url('//at.alicdn.com/t/font_1475400982_4863694.svg#iconfont') format('svg'); /* iOS 4.1- */
-}
-                                      
-                    
-                    
+  font-family: 'iconfont';  /* project id 73680 */
+  src: url('//at.alicdn.com/t/font_l0c3jug917yl23xr.eot');
+  src: url('//at.alicdn.com/t/font_l0c3jug917yl23xr.eot?#iefix') format('embedded-opentype'),
+  url('//at.alicdn.com/t/font_l0c3jug917yl23xr.woff') format('woff'),
+  url('//at.alicdn.com/t/font_l0c3jug917yl23xr.ttf') format('truetype'),
+  url('//at.alicdn.com/t/font_l0c3jug917yl23xr.svg#iconfont') format('svg');
+}               
                                       
 .pager-sm li > a, .pager-sm li > span {
     padding: 1px 8px;
@@ -40,8 +37,11 @@ blockquote{
 }                    
 /***默认颜色**/
 .def-bg{
-	background:#cccccc;
-}                 
+	background:#DDDDDD;
+}
+.light-bg{
+	background:#f9fafc;
+}
 .search-input:focus{
 	opacity:1!important;
 }  
@@ -102,7 +102,7 @@ blockquote{
 }
 
 .input-wrapper input {
-    padding: 26px 8px;
+    padding: 10px 8px;
     height: 48px;
     width: 100%;
     font-size: 16px;
@@ -130,6 +130,12 @@ blockquote{
     border-radius: 2px;
     -webkit-box-shadow: none;
     box-shadow: none;
+}
+#editResponseParamTable input,#editResponseParamTable select,
+#eparamRemarkTable input,#eparamRemarkTable select{
+	padding:5px 5px;
+	height:25px!important;
+	font-size:12px!important;
 }
 
 /***************接口详情页面*************/
@@ -309,6 +315,14 @@ blockquote{
 	background: rgba(0, 0, 0, 0.1); 
 	padding-top:20%; text-align:center;
 }
+.float-close{
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 30px;
+  cursor: pointer;
+  color:red;
+}
 .look-up {
   position: absolute;
   top: 40%;
@@ -321,7 +335,7 @@ blockquote{
   padding: 1px;
 }
 #lookUp{
- 	z-index: 1060;
+ 	z-index: 1061;
 }
 .look-up-content {
   position: relative;

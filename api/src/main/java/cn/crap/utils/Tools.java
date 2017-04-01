@@ -1,7 +1,11 @@
 package cn.crap.utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,12 +30,53 @@ import cn.crap.dto.CrumbDto;
 import cn.crap.dto.LoginInfoDto;
 import cn.crap.framework.MyException;
 import cn.crap.framework.SpringContextHolder;
-import cn.crap.inter.service.ICacheService;
-import cn.crap.service.CacheService;
+import cn.crap.inter.service.tool.ICacheService;
+import cn.crap.service.tool.CacheService;
 
 
 public class Tools {
-	
+	public static void staticize(String html, String filePath) throws MyException, IOException{
+		if(html == null){
+			throw new MyException("000045");
+		}
+		OutputStreamWriter fw = new OutputStreamWriter(new FileOutputStream(filePath),"UTF-8");
+		try{
+			fw.write(html);
+			fw.flush();
+		}catch(Exception e){
+			e.printStackTrace();
+			throw new MyException("000001", e.getMessage());
+		}finally{
+			fw.close();
+		}
+	}
+	/** 
+     * 通过递归调用删除一个文件夹及下面的所有文件 
+     * @param file 
+     */  
+    public static void deleteFile(String filePath){  
+    	File file = new File(filePath);
+    	if( !file.exists()){
+    		return;
+    	}
+        if(file.isFile()){//表示该文件不是文件夹  
+            file.delete();  
+        }else{  
+            //首先得到当前的路径  
+            String[] childFilePaths = file.list();  
+            for(String childFilePath : childFilePaths){  
+                deleteFile(file.getAbsolutePath()+"\\"+childFilePath);  
+            }  
+            file.delete();  
+        }  
+    } 
+    // 创建文件夹
+    public static void createFile(String filePath){  
+    	File file = new File(filePath);
+    	if( !file.exists()){
+    		file.mkdirs();
+    	}
+    }  
 	/**
 	 * 构造查询的id
 	 * @param roleName
@@ -56,15 +101,8 @@ public class Tools {
 		String imgCode = cacheService.getStr(Const.CACHE_IMGCODE + MyCookie.getCookie(Const.COOKIE_UUID, false, request));
 		return imgCode == null? System.currentTimeMillis()+"" : imgCode.toString();
 	}
-	/**
-	 * 查询是否拥有权限
-	 */
-	public static boolean hasAuth(String authPassport, String moduleId) throws MyException {
-		return hasAuth(authPassport, moduleId, Tools.getRequest());
-	}
-	public static boolean hasAuth(String authPassport,
-			String moduleId, HttpServletRequest request) throws MyException {
-		ICacheService cacheService = SpringContextHolder.getBean("cacheService", CacheService.class);
+	
+	public static boolean hasAuth(String authPassport) throws MyException {
 		LoginInfoDto user = Tools.getUser();
 		if(user == null ){
 			throw new MyException("000003");
@@ -75,51 +113,20 @@ public class Tools {
 			return true;//超级管理员
 		}
 		
-		// 修改自己创建的模块
-		if(!MyString.isEmpty(moduleId) && cacheService.getModule(moduleId).getUserId().equals(user.getId())){
-			return true;
-		}
-		
 		// 管理员修改自己的资料
-		if(authPassport.equals("USER") && request != null){
+		if(authPassport.equals("USER")){
 			// 如果session中的管理员id和参数中的id一致
-			if( MyString.isEquals(  user.getId(),  MyString.getValueFromRequest(request, "id", "-1")  )  ){
+			if( MyString.isEquals(  user.getId(),  user.getId() )  ){
 				return true;
 			}
 		}
 		
-		// 普通用户没有其他访问的权限
-		if(Tools.getUser().getType() != 100){
-			throw new MyException("000003");
-		}
-		
-		String needAuth = authPassport.replace(Const.MODULEID, moduleId);
-		if(authority.indexOf(","+needAuth+",")>=0){
+		if(authority.indexOf(","+authPassport+",")>=0){
 			return true;
 		}
 		throw new MyException("000003");
 	}
 	
-	/**********************模块访问密码***************************/
-	public static void canVisitModule(String modulePassword,String password, String visitCode, HttpServletRequest request) throws MyException{
-		ICacheService cacheService = SpringContextHolder.getBean("cacheService", CacheService.class);
-		String temPwd = cacheService.getStr(Const.CACHE_TEMP_PWD + MyCookie.getCookie(Const.COOKIE_UUID, false, request));
-		if(!MyString.isEmpty(modulePassword)){
-			if(!MyString.isEmpty(temPwd)&&temPwd.toString().equals(modulePassword)){
-				return;
-			}
-			if(MyString.isEmpty(password)||!password.equals(modulePassword)){
-				throw new MyException("000007");
-			}
-			if(cacheService.getSetting(Const.SETTING_VISITCODE).getValue().equals("true")){
-				Object imgCode = getImgCode(request);
-				if(MyString.isEmpty(visitCode)||imgCode==null||!visitCode.equals(imgCode.toString())){
-					throw new MyException("000007");
-				}
-			}
-			cacheService.setStr(Const.CACHE_TEMP_PWD + MyCookie.getCookie(Const.COOKIE_UUID, false, request), password, 10 * 60);
-		}
-	}
 	/**
 	 * 构造查询Map集合
 	 * @param params 不定数量参数 格式(key1,value1,key2,value2....)
@@ -347,16 +354,9 @@ public class Tools {
 		String uId = MyCookie.getCookie(Const.COOKIE_USERID, false, Tools.getRequest());
 		return (LoginInfoDto) cacheService.getObj(Const.CACHE_USER + uId);
 	}
-	/**
-	 * 判断模块id是否合法：top，0，privateModule则不合法，不允许查看所有项目
-	 * @param moduleId
-	 */
-	public static boolean moduleIdIsLegal(String moduleId){
-		return !(MyString.isEmpty(moduleId) || moduleId.equals(Const.ADMIN_MODULE) || moduleId.equals(Const.TOP_MODULE) || moduleId.equals(Const.PRIVATE_MODULE));
-	}
 	
 	public static boolean checkUserName(String userName){
-		String regex = "^[0-9A-Za-z]{6,20}$";		
+		String regex = "^[0-9A-Za-z-_\\.]{5,20}$";		
 		return userName.matches(regex);
 	}
 	public static boolean checkEmail(String email){

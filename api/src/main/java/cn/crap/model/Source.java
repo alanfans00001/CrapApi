@@ -11,10 +11,11 @@ import org.hibernate.annotations.GenericGenerator;
 
 import cn.crap.dto.ILuceneDto;
 import cn.crap.dto.SearchDto;
+import cn.crap.enumeration.ProjectType;
 import cn.crap.framework.SpringContextHolder;
 import cn.crap.framework.base.BaseModel;
-import cn.crap.inter.service.ICacheService;
-import cn.crap.service.CacheService;
+import cn.crap.inter.service.tool.ICacheService;
+import cn.crap.service.tool.CacheService;
 import cn.crap.utils.GetTextFromFile;
 import cn.crap.utils.MyString;
 
@@ -33,19 +34,20 @@ public class Source extends BaseModel implements Serializable,ILuceneDto{
 	
 	private String name;// 资源名称
 	private String updateTime;
-	private String directoryId;// 文件夹目录：dataCenter id
+	private String moduleId;// 文件夹目录：dataCenter id
 	private String remark; // 资源内容
 	private String filePath;
 	
 	public Source(){};
-	public Source(String id, String createTime, byte status, int sequence, String name, String filePath, String directoryId, String updateTime){
+	public Source(String id, String createTime, byte status, int sequence, String name, String remark, String filePath, String moduleId, String updateTime){
 		this.id = id;
 		this.createTime = createTime;
 		this.status = status;
 		this.sequence = sequence;
 		this.name = name;
+		this.remark = remark;
 		this.filePath = filePath;
-		this.directoryId = directoryId;
+		this.moduleId = moduleId;
 		this.updateTime = updateTime;
 		
 	}
@@ -68,13 +70,12 @@ public class Source extends BaseModel implements Serializable,ILuceneDto{
 		this.updateTime = updateTime;
 	}
 
-	@Column(name="directoryId")
-	public String getDirectoryId() {
-		return directoryId;
+	@Column(name="moduleId")
+	public String getModuleId() {
+		return moduleId;
 	}
-
-	public void setDirectoryId(String directoryId) {
-		this.directoryId = directoryId;
+	public void setModuleId(String moduleId) {
+		this.moduleId = moduleId;
 	}
 
 	@Column(name="remark")
@@ -96,13 +97,21 @@ public class Source extends BaseModel implements Serializable,ILuceneDto{
 	}
 	
 	@Transient
-	public String getDirectoryName(){
-		if(!MyString.isEmpty(directoryId)){
-			if(directoryId != null && directoryId.equals("0")){
-				return "根目录";
-			}
+	public String getProjectId() {
+		if (!MyString.isEmpty(moduleId)) {
 			ICacheService cacheService = SpringContextHolder.getBean("cacheService", CacheService.class);
-			DataCenter module = cacheService.getModule(directoryId);
+			Module module = cacheService.getModule(moduleId);
+			if (module != null)
+				return module.getProjectId();
+		}
+		return "";
+	}
+	
+	@Transient
+	public String getModuleName(){
+		if(!MyString.isEmpty(moduleId)){
+			ICacheService cacheService = SpringContextHolder.getBean("cacheService", CacheService.class);
+			Module module = cacheService.getModule(moduleId);
 			if(module!=null)
 				return module.getName();
 		}
@@ -110,14 +119,15 @@ public class Source extends BaseModel implements Serializable,ILuceneDto{
 	}
 
 	@Transient
-	public SearchDto toSearchDto(ICacheService service){
+	public SearchDto toSearchDto(ICacheService cacheService){
 		SearchDto dto = new SearchDto();
 		dto.setId(id);
 		dto.setCreateTime(createTime);
 		dto.setTitle(name);
 		dto.setType(Source.class.getSimpleName());
-		dto.setUrl("#/front/source/detail/"+id);
+		dto.setUrl("#/"+getProjectId()+"/source/detail/"+id);
 		dto.setVersion("");
+		dto.setProjectId(getProjectId());
 		//索引内容 = 备注内容 + 文档内容
 		String docContent = "";
 		try {
@@ -130,10 +140,17 @@ public class Source extends BaseModel implements Serializable,ILuceneDto{
 		if( MyString.isEmpty(this.remark) ){
 			this.remark = docContent.length() > 2500? docContent.substring(0, 2500) +" ... \r\n..." : docContent;
 		}
+		// 私有项目不能建立索引
+		if(cacheService.getProject(getProjectId()).getType() == ProjectType.PRIVATE.getType()){
+			dto.setNeedCreateIndex(false);
+		}
 		return dto;
 	}
 	
-	
+	@Transient
+	public String getLogRemark(){
+		return name;
+	}
 	
 	
 }

@@ -2,9 +2,11 @@ package cn.crap.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,10 +38,13 @@ public class HttpPostGet {
 	public final static String ACCEPT_JSON = "application/json";
 
 	public static String get(String path, Map<String, String> params, Map<String, String> headers) throws Exception {
+		return get(path, params, headers, 5000);
+	}
+	public static String get(String path, Map<String, String> params, Map<String, String> headers, int timeout) throws Exception {
 		path = gethPath(path, params);
 		HttpGet method = new HttpGet(path);
-		RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(5000).setConnectTimeout(5000)
-				.setConnectionRequestTimeout(5000).setStaleConnectionCheckEnabled(true).build();
+		RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(timeout).setConnectTimeout(timeout)
+				.setConnectionRequestTimeout(timeout).setStaleConnectionCheckEnabled(true).build();
 		method.setConfig(requestConfig);
 		return getMethod(method, headers);
 	}
@@ -219,7 +224,7 @@ public class HttpPostGet {
 		return EntityUtils.toString(entity, "UTF-8");
 	}
 
-	private static String gethPath(String path, Map<String, String> params) {
+	private static String gethPath(String path, Map<String, String> params) throws UnsupportedEncodingException {
 		if (params != null) {
 			if (path.indexOf("?") > -1) {
 				path += "&";
@@ -230,14 +235,16 @@ public class HttpPostGet {
 			Iterator<String> iterator = keys.iterator();
 			while (iterator.hasNext()) {
 				String key = (String) iterator.next();
-				path += key + "=" + params.get(key) + "&";
+				path += key + "=" +URLEncoder.encode(params.get(key), "UTF-8")  + "&";
 			}
+			if(path.endsWith("&"))
+				path = path.substring(0, path.length()-1);
 		}
 		return path;
 	}
 
 	// 获取页面代码
-	public static InputStream GetString(String path) throws Exception {
+	public static InputStream getInputStream(String path) throws Exception {
 		URL url = new URL(path);
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");

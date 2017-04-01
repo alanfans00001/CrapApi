@@ -1,4 +1,4 @@
-<div class="r0 p20 pt10 col-xs-12 mb50" ng-controller="settingDetailCtrl">
+<div class="r0 p20 pt10 col-xs-12 mb50 BGFFF" ng-controller="settingDetailCtrl">
 <div class="col-xs-6 f16 fb p0 mb5">系统设置【图片】</div>
 <div class="col-xs-6 f14 p0 mb5 tr">
 	<a type="button" class="btn btn-purple btn-sm" onclick="history.back(-1);"> <i class="iconfont fb">&#xe605;&nbsp;</i>后退</a>
@@ -37,7 +37,7 @@
 		</form>
 		<form enctype="multipart/form-data" name="imageForm" style="margin-top:-21px"
 			target="hiddenFrame"
-			action="file/upload.do?callBack=uploadImgCallBack" method="post">
+			action="file/upload.do?callBack=uploadImgCallBack&property=value" method="post">
 			<table class="table table-bordered">
 				<tr>
 					<td class="tc w200">上传图片</td>

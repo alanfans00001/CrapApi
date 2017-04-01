@@ -16,15 +16,12 @@ import net.sf.json.JSONObject;
 
 public class BaseService<T extends BaseModel> implements IBaseService<T> {
 	protected IBaseDao<T> dao;
-	//空对象，避免空指针异常（当没有找到数据时，返回一个新的对象，该对象在类实例化时由子类调用setDao注入）
-	private T model = null;
 	@Autowired
 	private ILogDao logDao;
 	
 	
-	public void setDao(IBaseDao<T> dao, T model) {
+	public void setDao(IBaseDao<T> dao) {
 		this.dao = dao;
-		this.model = model;
 	}
 	
 	/**
@@ -33,10 +30,11 @@ public class BaseService<T extends BaseModel> implements IBaseService<T> {
 	@Override
 	@Transactional
 	public T save(T model){
+		model.setId(null);
 		dao.save(model);
 		return model;
 	}
-
+	
 	@Override
 	@Transactional
 	public void update(T model) {
@@ -48,7 +46,7 @@ public class BaseService<T extends BaseModel> implements IBaseService<T> {
 	public void update(T model, String modelName, String remark) {
 		T oldModel = dao.get(model.getId());
 		if(MyString.isEmpty(remark))
-			remark = "修改："+oldModel.getLogRemark();
+			remark = model.getLogRemark();
 		Log log = new Log(modelName, remark, LogType.UPDATE.name(), JSONObject.fromObject(oldModel).toString(),
 				model.getClass().getSimpleName(), model.getId());
 		logDao.save(log);
@@ -72,7 +70,7 @@ public class BaseService<T extends BaseModel> implements IBaseService<T> {
 	public void delete(T model, String modelName, String remark){
 		model = get(model.getId());
 		if(MyString.isEmpty(remark))
-			remark = "删除："+model.getLogRemark();
+			remark = model.getLogRemark();
 		Log log = new Log(modelName, remark, LogType.DELTET.name(), JSONObject.fromObject(model).toString(),
 				model.getClass().getSimpleName(), model.getId());
 		logDao.save(log);
@@ -92,13 +90,7 @@ public class BaseService<T extends BaseModel> implements IBaseService<T> {
 	@Override
 	@Transactional
 	public T get(String id){
-		if(MyString.isEmpty(id))
-			return model;
-		T temp = dao.get(id);
-		if(temp != null)
-			return temp;
-		else
-			return model;
+		return dao.get(id);
 	}
 
 	/**
@@ -142,14 +134,14 @@ public class BaseService<T extends BaseModel> implements IBaseService<T> {
 	
 	@Override
 	@Transactional
-	public List<?> queryByHql(String hql, Map<String, Object> map){
+	public List<T> queryByHql(String hql, Map<String, Object> map){
 		return  queryByHql(hql, map, null);
 	}
 	
 	@Override
 	@Transactional
-	public List<?> queryByHql(String hql, Map<String, Object> map, Page page){
-		return  dao.queryByHql(hql, map);
+	public List<T> queryByHql(String hql, Map<String, Object> map, Page page){
+		return  dao.queryByHql(hql, map, page);
 	}
 	
 }

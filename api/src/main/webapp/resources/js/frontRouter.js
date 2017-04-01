@@ -8,12 +8,7 @@
  * @return {[type]}
  */
 app.config(function($stateProvider, $urlRouterProvider) {
-	if($("#projectId").length>0){// 项目主页
-		$urlRouterProvider.otherwise('/project');
-	}else{
-		$urlRouterProvider.otherwise('/top/webPage/detail/PAGE/WELCOME');
-	}
-	
+	$urlRouterProvider.otherwise('/web/article/detail/web/PAGE/WELCOME');
 	$stateProvider.state('frontSearchCtrl', {
 		url : '/frontSearch/:keyword',
 		views : {
@@ -26,18 +21,25 @@ app.config(function($stateProvider, $urlRouterProvider) {
 				templateUrl : 'resources/html/frontHtml/page.tpl.html'
 			}
 		}
-	}).state('webError', {
-		url : '/:moduleId/error/list',
+	}).state('frontError', {
+		url : '/:projectId/error/list',
 		views : {
 			'main' : {
 				templateUrl : 'resources/html/frontHtml/errorList.tpl.html'
 			},
-			'page@webError' : {
+			'page@frontError' : {
 				templateUrl : 'resources/html/frontHtml/page.tpl.html'
 			}
 		}
+	}).state('frontModuleCtrl', {
+		url : '/:projectId/module/list',
+		views : {
+			'main' : {
+				templateUrl : 'resources/html/frontHtml/moduleList.tpl.html'
+			}
+		}
 	}).state('frontInterfaceCtrl', {
-		url : '/:projectId/interface/list/:moduleId/:moduleName',
+		url : '/:projectId/interface/list/:moduleId',
 		views : {
 			'main' : {
 				templateUrl : 'resources/html/frontHtml/interfaceList.tpl.html'
@@ -63,12 +65,22 @@ app.config(function($stateProvider, $urlRouterProvider) {
 			}
 		}
 	}).state('frontSourceList', {
-		url : '/front/source/list/:directoryId/:directoryName',
+		url : '/:projectId/source/list/:moduleId',
 		views : {
 			'main' : {
 				templateUrl : 'resources/html/frontHtml/sourceList.tpl.html'
 			},
 			'page@frontSourceList' : {
+				templateUrl : 'resources/html/frontHtml/page.tpl.html'
+			}
+		}
+	}).state('frontProjectList', {
+		url : '/project/list/:myself/NULL',
+		views : {
+			'main' : {
+				templateUrl : 'resources/html/frontHtml/projectList.tpl.html'
+			},
+			'page@frontProjectList' : {
 				templateUrl : 'resources/html/frontHtml/page.tpl.html'
 			}
 		}

@@ -1,4 +1,4 @@
-<div class="r0 p20 pt10 col-xs-12" ng-controller="menuCtrl">
+<div class="r0 p20 pt10 col-xs-12 BGFFF" ng-controller="menuCtrl">
 <div class="col-xs-6 f16 fb p0 mb5">菜单管理</div>
 <div class="col-xs-6 f14 p0 mb5 tr">
 	<a type="button" class="btn btn-default btn-sm">父菜单：【{{$stateParams.menuName}}】</a>
@@ -53,7 +53,7 @@
 					data-original-title="编辑"> <i class="iconfont f12">&#xe618;修改</i>
 				</a>
 				<!-- 菜单只有两级，只有parentId=0的菜单才能查看子菜单 -->
-				<a class="f12 text-primary mr10 cursor" ng-href="#/menu/list/{{item.id}}/null/{{item.menuName}}" ng-if="item.parentId=='0'"> 
+				<a class="f12 text-primary mr10 cursor" ng-href="#/menu/list/{{item.id}}/null/{{item.menuName}}" ng-if="item.parentId=='0' && $stateParams.type!='FRIEND' && $stateParams.type!='BOTTOM'"> 
 					<i class="iconfont f12">&#xe60f;子菜单</i>
 				</a>
 				<a class="f12 text-danger mr10 cursor" title="删除"
@@ -61,10 +61,10 @@
 					<i class="iconfont f12">&#xe60e;删除</i>
 				</a>
 				<div class="w50 fr tl">
-					<a class="f12 text-danger mr10 cursor" title="向上移" ng-click="changeSequence('menu',item.id,list[$index-1].id)" ng-if="$index>0">
+					<a class="f12 text-danger mr10 cursor" title="向上移" ng-click="changeSequence('back/menu/changeSequence.do',item.id,list[$index-1].id)" ng-if="$index>0">
 						<i class="iconfont f12">&#xe623;</i>
 					</a>
-					<a class="f12 text-danger mr10 cursor" title="向下移" ng-click="changeSequence('menu',item.id,list[$index+1].id)" ng-if="$index<list.length-1">
+					<a class="f12 text-danger mr10 cursor" title="向下移" ng-click="changeSequence('back/menu/changeSequence.do',item.id,list[$index+1].id)" ng-if="$index<list.length-1">
 						<i class="iconfont f12">&#xe624;</i>
 					</a>
 				</div>

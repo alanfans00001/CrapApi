@@ -4,9 +4,9 @@ String.prototype.trim = function () {
 }
 
 //回顶部
-$("#go_top").click(function (){
+function goTop(){
 	$("html, body").animate({ scrollTop: 0 }, 400);
-});
+}
 
 //将指定id的控件滚动到浏览器顶部，如：接口详情页目录
 function scrollToId(id){
@@ -60,12 +60,32 @@ function closeMyDialog(tagDiv){
 	iClose(tagDiv);
 	iClose('fade');
 }
+
+
+var dialogOldTop;
+var dialogOldLeft;
+var dialogOldHeight;
+var dialogOldWidth;
 function fullMyDialog(tagDiv){
-	$("#"+tagDiv).css("top","0px");
-	$("#"+tagDiv).css("left","0px");
-	$("#"+tagDiv).css("height","100%");
-	$("#"+tagDiv).css("width","100%");
-	$("#myDialogContent").css("max-height","100%");
+	var target = $("#"+tagDiv);
+	if( target.css('top') != '0px'){
+		dialogOldTop = target.css('top');
+		dialogOldLeft = target.css('left');
+		dialogOldHeight = target.css('height');
+		dialogOldWidth = target.css('width');
+		$("#"+tagDiv).css("top","0px");
+		$("#"+tagDiv).css("left","0px");
+		$("#"+tagDiv).css("height","100%");
+		$("#"+tagDiv).css("width","100%");
+		$("#myDialogContent").css("max-height","100%");
+	}else{
+		$("#"+tagDiv).css("top",dialogOldTop);
+		$("#"+tagDiv).css("left",dialogOldLeft);
+		$("#"+tagDiv).css("height",dialogOldHeight);
+		$("#"+tagDiv).css("width",dialogOldWidth);
+		$("#myDialogContent").removecss("max-height");
+	}
+	
 }
 function loadPick(event,iwidth,iheight,radio,tag,code,type,def,params,showType,iCallBack,iCallBackParam) { 
 	/***********加载选择对话框********************/
@@ -102,7 +122,7 @@ function uploadImage(id,size,form){
 	form.submit();
 }
 //上传图片非编辑器默认回调方法
-function uploadImgCallBack(msg, url) {
+function uploadImgCallBack(msg, url, property) {
 	if (msg.indexOf("[OK]") >= 0) {
 		$("#image").attr("src", url + "");
 		$("#image").removeClass("ndis");
@@ -110,8 +130,8 @@ function uploadImgCallBack(msg, url) {
 		if (url!= undefined) {
 			//修改setting中的value
 			var rootScope = getRootScope();
-			rootScope.$apply(function () {          
-			    rootScope.model.value = url;
+			rootScope.$apply(function () {  
+				rootScope.model[property] = url;
 			});
 		}
 	}else {

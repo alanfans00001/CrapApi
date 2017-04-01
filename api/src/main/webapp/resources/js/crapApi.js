@@ -11,8 +11,8 @@ function propUpPsswordDiv(obj){
 	}
 }
 
-/****************添加数据字典****************/
-function addOneField(name, type, notNull,def, remark, rowNum) {
+/****************数据字典****************/
+function addOneField(name, type, notNull,flag, def, remark, rowNum) {
 	if (!rowNum || rowNum == '') {
 		var mydate = new Date();
 		rowNum = mydate.getTime();
@@ -21,17 +21,37 @@ function addOneField(name, type, notNull,def, remark, rowNum) {
 				.append("<tr>"
 						+"<td><input class='form-control' type='text' name='name' value='"+ name + "' placeholder=\"字段名\"></td>"
 						+"<td><input class='form-control' type='text' name='type' value='"+ type + "' placeholder=\"类型\"></td>"
-						+"<td><input class='form-control' type='text' name='notNull' value='"+ notNull + "' placeholder=\"是否可为空\"></td>"
+						+"<td><select name='notNull' class='form-control'><option value='true'"+ (notNull=='true' ? " selected":"") + ">true</option><option value='false'"+ (notNull=='true' ? "":" selected") +">false</option></select></td>"
 						+"<td><input class='form-control' type='text' name='def' value='"+ def + "' placeholder=\"默认值\"></td>"
+						+"<td><select name='flag' class='form-control'><option value='common'"+ ( flag == 'common'  ? " selected":"") + ">普通</option><option value='primary'"+ ( flag == 'primary'  ? " selected":"") + ">主键</option><option value='foreign'"+ (flag == 'foreign' ? " selected":"") +">外键</option><option value='associate'"+ ( flag == 'associate'  ? " selected":"") + ">关联</option></select></td>"
 						+"<td><input class='form-control' type='text' name='remark' value='"+ remark + "' placeholder=\"注释\"></td>"
-						+ "<td class='cursor text-danger'><i class='iconfont' onclick='deleteOneParam(this)'>&#xe60e;</i></td>"
+						+"<td class='cursor text-danger'>"
+						+		"<i class='iconfont' onclick='deleteOneParam(this)'>&#xe60e;</i>&nbsp;&nbsp; "
+						+		"<i class='iconfont' onclick='upward(this)'>&#xe623;</i>&nbsp;&nbsp;"
+						+		"<i class='iconfont' onclick='downward(this)'>&#xe624;</i>"
+						+"</td>"
 						+"</tr>");
 }
 
-/****************End****************/
 function deleteOneParam(nowTr) {
 	$(nowTr).parent().parent().remove();
 }
+
+function upward(nowTr){
+	var $tr = $(nowTr).parent().parent(); 
+    if ($tr.index() != 0) { 
+      $tr.fadeOut(1).fadeIn(600); 
+      $tr.prev().fadeOut(1).fadeIn(1000); 
+      $tr.prev().before($tr); 
+    } 
+}
+function downward(nowTr){
+	var $tr = $(nowTr).parent().parent(); 
+      $tr.fadeOut(1).fadeIn(600);  
+      $tr.next().fadeOut(1).fadeIn(1000); 
+      $tr.next().after($tr); 
+}
+/****************End****************/
 
 function unescapeAndDecode(name){
 	var value = $.cookie(name);
@@ -149,7 +169,6 @@ function setPick() {
 	var checkBoxValue = "";
 	var checkBoxName = "";
 	var rootScope = getRootScope();
-	var stateParams = getStateParams();
 	for (var i = 0; i < length; i++) {
 		if (pickRadio == 'true') {
 			if (document.getElementsByName('cid')[i].checked == true) {
@@ -160,7 +179,6 @@ function setPick() {
 							rootScope.model[pickTagName] = $(".cidName")[i].textContent;
 					}
 					$("#"+pickTag).val(document.getElementsByName('cid')[i].value);
-					stateParams[pickTag] = document.getElementsByName('cid')[i].value;
 					if(rootScope.model)
 						rootScope.model[pickTag] = document.getElementsByName('cid')[i].value;
 				});
@@ -235,4 +253,19 @@ function saveMarkdown(markdown,content){
 	    rootScope.model[content] = $(window.frames["markdownFrame"].document).find('#preview').html();
 	});
 	closeMyDialog('markdownDialog');
+}
+// 重建索引
+function rebuildIndex(obj){
+	if (confirm("确定重建索引？")) {
+		selectButton(obj,'menu-a');
+		callAjaxByName('iUrl=back/rebuildIndex.do|iLoading=PROPUPFLOAT重建索引中，刷新页面可以查看实时进度...|ishowMethod=updateDivWithImg');
+	}
+}
+
+//刷新缓存
+function flushDB(obj){
+	if (confirm("确定刷新缓存？登陆信息等缓存将被删除")) {
+		selectButton(obj,'menu-a');
+		callAjaxByName('iUrl=back/flushDB.do|iLoading=TIPFLOAT刷新中，请稍后...|ishowMethod=updateDivWithImg');
+	}
 }

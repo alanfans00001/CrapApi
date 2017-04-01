@@ -5,9 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.mail.MessagingException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -15,23 +13,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import cn.crap.beans.Config;
 import cn.crap.dto.FindPwdDto;
 import cn.crap.dto.LoginDto;
 import cn.crap.dto.LoginInfoDto;
 import cn.crap.enumeration.LoginType;
+import cn.crap.framework.ErrorInfos;
 import cn.crap.framework.JsonResult;
 import cn.crap.framework.MyException;
 import cn.crap.framework.auth.AuthPassport;
 import cn.crap.framework.base.BaseController;
-import cn.crap.inter.service.ICacheService;
-import cn.crap.inter.service.IDataCenterService;
-import cn.crap.inter.service.IEmailService;
-import cn.crap.inter.service.IMenuService;
-import cn.crap.inter.service.IRoleService;
-import cn.crap.inter.service.IUserService;
+import cn.crap.inter.service.table.IMenuService;
+import cn.crap.inter.service.table.IProjectService;
+import cn.crap.inter.service.table.IProjectUserService;
+import cn.crap.inter.service.table.IRoleService;
+import cn.crap.inter.service.table.IUserService;
+import cn.crap.inter.service.tool.ICacheService;
+import cn.crap.inter.service.tool.IEmailService;
 import cn.crap.model.Setting;
 import cn.crap.model.User;
+import cn.crap.springbeans.Config;
 import cn.crap.utils.Aes;
 import cn.crap.utils.Const;
 import cn.crap.utils.MD5;
@@ -52,7 +52,9 @@ public class LoginController extends BaseController<User> {
 	@Autowired
 	private IRoleService roleService;
 	@Autowired
-	private IDataCenterService dataCenterService;
+	private IProjectService projectService;
+	@Autowired
+	private IProjectUserService projectUserService;
 	@Autowired
 	private Config config;
 	
@@ -80,8 +82,13 @@ public class LoginController extends BaseController<User> {
 		}
 		LoginDto model = new LoginDto();
 		model.setUserName(MyCookie.getCookie(Const.COOKIE_USERNAME, request));
-		model.setPassword(MyCookie.getCookie(Const.COOKIE_PASSWORD, true, request));
 		model.setRemberPwd(MyCookie.getCookie(Const.COOKIE_REMBER_PWD, request));
+		if(!model.getRemberPwd().equalsIgnoreCase("no")){
+			model.setPassword(MyCookie.getCookie(Const.COOKIE_PASSWORD, true, request));
+		}else{
+			model.setPassword("");
+		}
+	
 		model.setTipMessage("");
 		LoginInfoDto user = (LoginInfoDto) Tools.getUser();
 		model.setSessionAdminName(user == null? null:user.getUserName());
@@ -91,7 +98,7 @@ public class LoginController extends BaseController<User> {
 	}
 	
 	/**
-	 * 登陆页面获取基础数据
+	 * 注册页面获取基础数据
 	 */
 	@RequestMapping("/back/preRegister.do")
 	@ResponseBody
@@ -118,7 +125,8 @@ public class LoginController extends BaseController<User> {
 			if(user.getId() != null){
 				user.setStatus( Byte.valueOf("2") );
 				userService.update(user);
-				cacheService.setObj(Const.CACHE_USER + user.getId(), new LoginInfoDto(user, roleService, dataCenterService), config.getLoginInforTime());
+				cacheService.setObj(Const.CACHE_USER + user.getId(), 
+						new LoginInfoDto(user, roleService, projectService, projectUserService), config.getLoginInforTime());
 				request.setAttribute("result", "验证通过！");
 			}else{
 				request.setAttribute("result", "抱歉，账号不存在！");
@@ -180,7 +188,7 @@ public class LoginController extends BaseController<User> {
 		findPwdDto.check();
 		
 		String code = cacheService.getStr(Const.CACHE_FINDPWD + findPwdDto.getEmail());
-		if(code == null || !code.equals(findPwdDto.getCode())){
+		if(code == null || !code.equalsIgnoreCase(findPwdDto.getCode())){
 			throw new MyException("000031");
 		}
 		
@@ -197,6 +205,10 @@ public class LoginController extends BaseController<User> {
 	@RequestMapping("/back/register.do")
 	@ResponseBody
 	public JsonResult register(@ModelAttribute LoginDto model) throws MyException, UnsupportedEncodingException, MessagingException {
+		if( !config.isOpenRegister() ){
+			model.setTipMessage("系统尚未开放注册功能，请联系管理员开放");
+			return new JsonResult(1, model); 
+		}
 		if( MyString.isEmpty(model.getUserName())){
 			model.setTipMessage("邮箱不能为空");
 			return new JsonResult(1, model);
@@ -227,7 +239,7 @@ public class LoginController extends BaseController<User> {
 			user.setUserName(model.getUserName().split("@")[0]);
 			// 判断用户名是否重名，重名则修改昵称
 			if( userService.getCount(Tools.getMap("userName", user.getUserName())) >0 ){
-				user.setUserName("ca_"+ model.getUserName().split("@")[0]);
+				user.setUserName("ca_"+ model.getUserName().split("@")[0]+"_"+Tools.getChar(5));
 			}
 			
 			user.setEmail(model.getUserName());
@@ -261,9 +273,14 @@ public class LoginController extends BaseController<User> {
 	@RequestMapping("/login.do")
 	@ResponseBody
 	public JsonResult JsonResult(@ModelAttribute LoginDto model) throws IOException, MyException {
+		try{
 			if (cacheService.getSetting(Const.SETTING_VERIFICATIONCODE).getValue().equals("true")) {
-				if (MyString.isEmpty(model.getVerificationCode()) || !model.getVerificationCode().equals(Tools.getImgCode(request))) {
-					model.setTipMessage("验证码有误");
+				if(MyString.isEmpty(model.getVerificationCode()) ){
+					model.setTipMessage("验证码为空,请刷新浏览器再试！");
+					return new JsonResult(1, model);
+				}
+				if (!model.getVerificationCode().equals(Tools.getImgCode(request))) {
+					model.setTipMessage("验证码有误,请重新输入或刷新浏览器再试！");
 					return new JsonResult(1, model);
 				}
 			}
@@ -289,6 +306,15 @@ public class LoginController extends BaseController<User> {
 				model.setTipMessage("用户名不存在");
 				return new JsonResult(1, model);
 			}
+		}catch(Exception e){
+			if(e instanceof MyException){
+				model.setTipMessage( ErrorInfos.getMessage( e.getMessage() ) );
+			}else{
+				e.printStackTrace();
+				model.setTipMessage("未知异常，请查看日志："+e.getMessage());
+			}
+			return new JsonResult(1, model);
+		}
 	}
 	
 	

@@ -1,4 +1,4 @@
-var app = angular.module('app', [ 'ui.router', 'mainModule','webModule','textAngular']);
+var app = angular.module('app', [ 'ui.router', 'mainModule','webModule','interfaceMethods','textAngular']);
 /**
  * 由于整个应用都会和路由打交道，所以这里把$state和$stateParams这两个对象放到$rootScope上，方便其它地方引用和注入。
  * 这里的run方法只会在angular启动的时候运行一次。
@@ -61,6 +61,7 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 				 $rootScope.list = result.data;
 				 $rootScope.page = result.page;
 				 $rootScope.others=result.others;
+				 $rootScope.deleteIds = ",";
 			 }
 		}).error(function(result) {
 			lookUp('lookUp','',100,300,3);
@@ -83,6 +84,7 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 				 }else{
 					 $rootScope.model = result.data;
 					 $rootScope.error = null;
+					 $rootScope.deleteIds = ",";
 					 if(callBack)
 						 callBack();
 				 }
@@ -107,12 +109,15 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 	$rootScope.copyInterface = function() {
 		changeDisplay('copyInterFace','interFaceDetail');
 	};
+	$rootScope.changeDisplay = function(id1, id2) {
+		changeDisplay(id1,id2);
+	}
 	$rootScope.del = function(iUrl,id,title){
 		title = title? title:"确认要删除【"+id+"】？";
 		if (confirm(title)) {
-			var params = "iUrl="+iUrl+"|iLoading=PROPUP";
+			var params = "iUrl="+iUrl+"|iLoading=TIP";
 			httpService.callHttpMethod($http,params).success(function(result) {
-				var isSuccess = httpSuccess(result,'iLoading=PROPUP')
+				var isSuccess = httpSuccess(result,'iLoading=TIP')
 				if(!isJson(result)||isSuccess.indexOf('[ERROR]') >= 0){
 					 $rootScope.error = isSuccess.replace('[ERROR]', '');
 				 }else{
@@ -131,7 +136,27 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 			});;
 	    }
 	};
-
+	// 选中某个选项
+	$rootScope.checkboxSelect = function(checkValues,value){
+		if( $rootScope[checkValues].indexOf(","+value+",")>=0 ){
+			$rootScope[checkValues] = $rootScope[checkValues].replace(value+",","");
+		}else{
+			$rootScope[checkValues] = $rootScope[checkValues]+value+","
+		}
+	}
+	// 全选，不选
+	$rootScope.selectAll = function(id,name,list){
+		selectAll(id, name);
+		if($("#"+id).prop("checked")==true){ 
+			$rootScope[name] = ",";
+			for (var i=0;i<list.length;i++){
+				$rootScope[name] = $rootScope[name] + list[i].id + "," ;
+			}
+		}else{
+			$rootScope[name] = ",";
+		}
+	}
+	
 	$rootScope.submitForm = function(iurl,callBack,myLoading){
 		/**
 		  * 回调刷新当前页面数据
@@ -139,7 +164,7 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 		if(callBack){
 			callBack();
 		}
-		iLoading = "PROPUPFLOAT";
+		iLoading = "TIPFLOAT";
 		if(myLoading){
 			iLoading = myLoading;
 		}
@@ -163,8 +188,8 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 			 
 		});
 	}
-	$rootScope.changeSequence = function(model,id,changeId){
-		var params = "iUrl=back/"+model+"/changeSequence.do|iLoading=FLOAT|iPost=POST|iParams=&id="+id+"&changeId="+changeId;
+	$rootScope.changeSequence = function(url,id,changeId){
+		var params = "iUrl="+url+"|iLoading=FLOAT|iPost=POST|iParams=&id="+id+"&changeId="+changeId;
 		httpService.callHttpMethod($http,params).success(function(result) {
 			var isSuccess = httpSuccess(result,'iLoading=FLOAT')
 			if(!isJson(result)||isSuccess.indexOf('[ERROR]') >= 0){
@@ -181,7 +206,33 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 			closeTip('[ERROR]未知异常，请联系开发人员查看日志', 'iLoading=PROPUP_FLOAT', 3);
 			$rootScope.error = result;
 			 
-		});;
+		});
+	}
+	/**
+	 * 发送请求工具方法
+	 */
+	$rootScope.sendRequest = function(url,myLoading){
+		var iLoading = "FLOATTIP";
+		if(myLoading){
+			iLoading = myLoading;
+		}
+		var params = "iUrl="+url+"|iLoading="+iLoading+"|iPost=POST";
+		httpService.callHttpMethod($http,params).success(function(result) {
+			var isSuccess = httpSuccess(result,'iLoading='+iLoading)
+			if(!isJson(result)||isSuccess.indexOf('[ERROR]') >= 0){
+				 $rootScope.error = isSuccess.replace('[ERROR]', '');
+			 }else if(result.success==1){
+				 $rootScope.error = null;
+				 $timeout(function() {
+					 $("#refresh").click();
+                 })
+			 }
+		}).error(function(result) {
+			lookUp('lookUp','',100,300,3);
+			closeTip('[ERROR]未知异常，请联系开发人员查看日志', 'iLoading=PROPUP_FLOAT', 3);
+			$rootScope.error = result;
+			 
+		});
 	}
 	/***********************是否显示操作按钮************/
 	
@@ -245,15 +296,18 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 		    	var i=0;
 		    	$.each(content, function (n, value) {
 		    		i++;
-		    		addOneField(value.name, value.type, value.notNull,value.def, value.remark, value.rowNum);
+		    		addOneField(value.name, value.type, value.notNull,value.flag, value.def, value.remark, value.rowNum);
 		        });  
 	    	}
-	    };
+	};
 	$rootScope.jsonformat = function(id,tiperror){
 		var result = format($rootScope.model[id],tiperror);
 		if(result){
 			$rootScope.model[id] = result;
 		}
+	}
+	$rootScope.callAjaxByName = function(iurl){
+		callAjaxByName(iurl);
 	}
 	/**************markdown*************/
 	$rootScope.markdownEtitor = function(href){
@@ -262,6 +316,9 @@ app.run(function($rootScope, $state, $stateParams, $http, $timeout,httpService) 
 	}
 	 $rootScope.iClose = function(id) {
 	    	iClose(id);
-	    };
+	 };
+	 $rootScope.staticize= function (id){
+			callAjaxByName('iUrl=user/staticize/staticize.do?projectId='+id+'|iLoading=TIPFLOAT静态化中，请稍后...|ishowMethod=updateDivWithImg|iFormId=staticize-form');
+	 }
 });
 

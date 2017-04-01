@@ -12,10 +12,11 @@ import org.hibernate.annotations.GenericGenerator;
 import cn.crap.dto.ILuceneDto;
 import cn.crap.dto.SearchDto;
 import cn.crap.enumeration.MonitorType;
+import cn.crap.enumeration.ProjectType;
 import cn.crap.framework.SpringContextHolder;
 import cn.crap.framework.base.BaseModel;
-import cn.crap.inter.service.ICacheService;
-import cn.crap.service.CacheService;
+import cn.crap.inter.service.tool.ICacheService;
+import cn.crap.service.tool.CacheService;
 import cn.crap.utils.MyString;
 
 @Entity
@@ -46,6 +47,8 @@ public class Interface extends BaseModel implements Serializable,ILuceneDto{
 	private int monitorType;
 	private String monitorText;
 	private String monitorEmails;
+	private String paramRemark; // 参数说明
+	private boolean template; // 是否是模板
 	public Interface() {
 	}
 
@@ -62,7 +65,12 @@ public class Interface extends BaseModel implements Serializable,ILuceneDto{
 		this.remark = remark;
 		this.sequence = sequence;
 	}
-
+	public Interface(String id, String moduleId, String interfaceName, String version, String createTime,
+			String updateBy, String updateTime, String remark, int sequence, boolean template) {
+		this(id, moduleId, interfaceName, version, createTime, updateBy, updateTime, remark, sequence);
+		this.template = template;
+	}
+    // 以get开头的方法在jsaon返回时会调用
 	@Transient
 	public SearchDto toSearchDto(ICacheService cacheService) {
 		SearchDto dto = new SearchDto();
@@ -72,10 +80,12 @@ public class Interface extends BaseModel implements Serializable,ILuceneDto{
 		dto.setModuleName(getModuleName());
 		dto.setTitle(interfaceName);
 		dto.setType(Interface.class.getSimpleName());
-		dto.setUrl("#/font/interfaceDetail/" + id);
+		dto.setUrl("#/"+getProjectId()+"/front/interfaceDetail/" + id);
 		dto.setVersion(version);
+		dto.setHref(getFullUrl());
+		dto.setProjectId(getProjectId());
 		// 私有项目不能建立索引
-		if(cacheService.getModule(this.moduleId).getStatus() == 2){
+		if(cacheService.getProject(getProjectId()).getType() == ProjectType.PRIVATE.getType()){
 			dto.setNeedCreateIndex(false);
 		}
 		return dto;
@@ -91,14 +101,14 @@ public class Interface extends BaseModel implements Serializable,ILuceneDto{
 	@Transient
 	public String getModuleName() {
 		ICacheService cacheService = SpringContextHolder.getBean("cacheService", CacheService.class);
-		DataCenter module = cacheService.getModule(moduleId);
+		Module module = cacheService.getModule(moduleId);
 		return MyString.isEmpty(module.getName()) ? "" : module.getName();
 	}
 
 	@Transient
 	public String getModuleUrl() {
 		ICacheService cacheService = SpringContextHolder.getBean("cacheService", CacheService.class);
-		DataCenter module = cacheService.getModule(moduleId);
+		Module module = cacheService.getModule(moduleId);
 		return MyString.isEmpty(module.getUrl()) ? "" : module.getUrl();
 	}
 
@@ -138,6 +148,17 @@ public class Interface extends BaseModel implements Serializable,ILuceneDto{
 
 	public void setParam(String param) {
 		this.param = param;
+	}
+	
+	@Column(name = "paramRemark")
+	public String getParamRemark() {
+		if (MyString.isEmpty(paramRemark))
+			return "[]";
+		return paramRemark;
+	}
+
+	public void setParamRemark(String paramRemark) {
+		this.paramRemark = paramRemark;
 	}
 
 	@Column(name = "requestExam")
@@ -289,11 +310,21 @@ public class Interface extends BaseModel implements Serializable,ILuceneDto{
 		this.monitorEmails = monitorEmails;
 	}
 
+	
+	@Column(name = "isTemplate")
+	public boolean isTemplate() {
+		return template;
+	}
+
+	public void setTemplate(boolean template) {
+		this.template = template;
+	}
+
 	@Transient
 	public String getProjectId() {
 		if (!MyString.isEmpty(moduleId)) {
 			ICacheService cacheService = SpringContextHolder.getBean("cacheService", CacheService.class);
-			DataCenter module = cacheService.getModule(moduleId);
+			Module module = cacheService.getModule(moduleId);
 			if (module != null)
 				return module.getProjectId();
 		}

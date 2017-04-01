@@ -8,7 +8,7 @@
  * @return {[type]}
  */
 app.config(function($stateProvider, $urlRouterProvider) {
-	$urlRouterProvider.otherwise('/top/webPage/detail/PAGE/ADMINHELP');
+	$urlRouterProvider.otherwise('/web/article/detail/web/PAGE/ADMINHELP');
 	/*********************后台*******************/
 	$stateProvider.state('loginOrRegister', {
 		url : '/login',
@@ -46,33 +46,108 @@ app.config(function($stateProvider, $urlRouterProvider) {
 				}
 			}
 		}
-	}).state('backInterfaceList', {
-		url : '/back/interface/list/:moduleId/:moduleName',
+	}).state('projectList', {
+		url : '/user/project/list/:myself/:type',
+		views : {
+			'main' :{
+				templateUrl : function($stateParems){
+					return 'resources/html/user/projectList.tpl.html';
+				}
+			},'page@projectList' : {
+				templateUrl : 'resources/html/backHtml/page.tpl.html'
+			},'detail' : {
+				templateUrl : function($stateParems){
+					return 'resources/html/user/projectDetail.tpl.html';
+				}
+			}
+		}
+	}).state('moduleList', {
+		url : '/user/module/list/:projectId',
 		views : {
 			'main' : {
-				templateUrl : 'resources/html/backHtml/interfaceList.tpl.html'
+				templateUrl : 'resources/html/user/moduleList.tpl.html'
 			},
-			'page@backInterfaceList' : {
+			'page@moduleList' : {
 				templateUrl : 'resources/html/backHtml/page.tpl.html'
 			},
 			'detail' : {
 				templateUrl : function($stateParems){
-					return 'resources/html/backHtml/interfaceDetail.tpl.html';
+					return 'resources/html/user/moduleDetail.tpl.html';
+				}
+			}
+		}
+	}).state('interfaceList', {
+		url : '/user/interface/list/:projectId/:moduleId/:moduleName',
+		views : {
+			'main' : {
+				templateUrl : 'resources/html/user/interfaceList.tpl.html'
+			},
+			'page@interfaceList' : {
+				templateUrl : 'resources/html/backHtml/page.tpl.html'
+			},
+			'detail' : {
+				templateUrl : function($stateParems){
+					return 'resources/html/user/interfaceDetail.tpl.html';
+				}
+			},
+			'interResEditorDiv@interfaceList' : {
+				templateUrl : 'resources/html/subTpl/interResEditorDiv.tpl.html'
+			},
+			'interFormParamDiv@interfaceList' : {
+				templateUrl : 'resources/html/subTpl/interFormParamDiv.tpl.html'
+			},
+			'interHeaderDiv@interfaceList' : {
+				templateUrl : 'resources/html/subTpl/interHeaderDiv.tpl.html'
+			},
+			'interParamRemakDiv@interfaceList' : {
+				templateUrl : 'resources/html/subTpl/interParamRemakDiv.tpl.html'
+			}
+			
+		}
+	}).state('errorList', {
+		url : '/user/error/list/:projectId',
+		views : {
+			'main' : {
+				templateUrl : 'resources/html/user/errorList.tpl.html'
+			},
+			'page@errorList' : {
+				templateUrl : 'resources/html/backHtml/page.tpl.html'
+			},
+			'detail' : {
+				templateUrl : function($stateParems){
+					return 'resources/html/user/errorDetail.tpl.html';
+				}
+			}
+		}
+	}).state('articleList', {
+		url : '/user/article/list/:projectId/:moduleId/:type',
+		views : {
+			'main' : {
+				templateUrl : function($stateParems){
+					return 'resources/html/user/articleList.tpl.html';
+				}
+			},
+			'page@articleList' : {
+				templateUrl : 'resources/html/backHtml/page.tpl.html'
+			},
+			'detail' : {
+				templateUrl : function($stateParems){
+					return 'resources/html/user/articleDetail_'+$stateParems.type+'.tpl.html';
 				}
 			}
 		}
 	}).state('sourceList', {
-		url : '/back/source/list/:directoryId/:directoryName',
+		url : '/user/source/list/:projectId/:moduleId',
 		views : {
 			'main' : {
-				templateUrl : 'resources/html/backHtml/sourceList.tpl.html'
+				templateUrl : 'resources/html/user/sourceList.tpl.html'
 			},
 			'page@sourceList' : {
 				templateUrl : 'resources/html/backHtml/page.tpl.html'
 			},
 			'detail' : {
 				templateUrl : function($stateParems){
-					return 'resources/html/backHtml/sourceDetail.tpl.html';
+					return 'resources/html/user/sourceDetail.tpl.html';
 				}
 			}
 		}
@@ -95,6 +170,24 @@ app.config(function($stateProvider, $urlRouterProvider) {
 				}
 			}
 		}
+	}).state('configProperties', {
+		url : '/config/properties',
+		views : {
+			'main' :{
+				templateUrl : function($stateParems){
+					return 'resources/html/backHtml/config.properties.html';
+				}
+			}
+		}
+	}).state('dictionaryImoprtFromSql', {
+		url : '/article/dictionary/importFromSql',
+		views : {
+			'main' :{
+				templateUrl : function($stateParems){
+					return 'resources/html/user/dictionaryImportFromSql.tpl.html';
+				}
+			}
+		}
 	}).state('userList', {
 		url : '/user/list',
 		views : {
@@ -110,33 +203,33 @@ app.config(function($stateProvider, $urlRouterProvider) {
 				}
 			}
 		}
-	}).state('webPageList', {
-		url : '/webPage/list/:type',
+	}).state('projectUserList', {
+		url : '/user/projectUser/list/:projectId',
 		views : {
 			'main' : {
-				templateUrl : 'resources/html/backHtml/webPageList.tpl.html'
+				templateUrl : 'resources/html/user/projectUserList.tpl.html'
 			},
-			'page@webPageList' : {
+			'page@projectUserList' : {
 				templateUrl : 'resources/html/backHtml/page.tpl.html'
 			},
 			'detail' : {
 				templateUrl : function($stateParems){
-					return 'resources/html/backHtml/webPageDetail_'+$stateParems.type+'.tpl.html';
+					return 'resources/html/user/projectUserDetail.tpl.html';
 				}
 			}
 		}
 	}).state('commentList', {
-		url : '/:projectId/comment/list/:webpageId',
+		url : '/:projectId/comment/list/:articleId',
 		views : {
 			'main' : {
-				templateUrl : 'resources/html/backHtml/commentList.tpl.html'
+				templateUrl : 'resources/html/user/commentList.tpl.html'
 			},
 			'page@commentList' : {
 				templateUrl : 'resources/html/backHtml/page.tpl.html'
 			},
 			'detail' : {
 				templateUrl : function($stateParems){
-					return 'resources/html/backHtml/commentDetail.tpl.html';
+					return 'resources/html/user/commentDetail.tpl.html';
 				}
 			}
 		}
@@ -155,21 +248,6 @@ app.config(function($stateProvider, $urlRouterProvider) {
 				}
 			}
 		}
-	}).state('errorList', {
-		url : '/error/list',
-		views : {
-			'main' : {
-				templateUrl : 'resources/html/backHtml/errorList.tpl.html'
-			},
-			'page@errorList' : {
-				templateUrl : 'resources/html/backHtml/page.tpl.html'
-			},
-			'detail' : {
-				templateUrl : function($stateParems){
-					return 'resources/html/backHtml/errorDetail.tpl.html';
-				}
-			}
-		}
 	}).state('profile', {
 		url : '/profile',
 		views : {
@@ -178,7 +256,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
 			}
 		}
 	}).state('logList', {
-		url : '/log/list',
+		url : '/log/list/:identy',
 		views : {
 			'main' : {
 				templateUrl : 'resources/html/backHtml/logList.tpl.html'
